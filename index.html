@@ -37,7 +37,7 @@
       padding: 30px;
       width: 90%;
       max-width: 400px;
-      border: none; /* removida a borda vermelha */
+      border: none;
       border-radius: 10px;
       text-align: center;
       box-shadow: 0 0 700000px rgb(0, 0, 0);
@@ -85,7 +85,7 @@
 <body>
   <div class="menu">
     <h1>Escape do Terror</h1>
-    <button class="botao">Jogar</button>
+    <button class="botao" onclick="jogar()">Jogar</button>
     <button class="botao">Instruções</button>
     <button class="botao" onclick="bloquearSaida()">Sair</button>
   </div>
@@ -114,6 +114,11 @@
       som.currentTime = 0;
       som.play();
       alert("Você não tem essa opção...");
+    }
+
+    // Função para abrir outra página
+    function jogar() {
+      window.location.href = "letreiro.html";
     }
   </script>
 </body>
