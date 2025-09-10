@@ -10,16 +10,19 @@ import {
   ScrollView,
   Animated,
   Switch,
+  Modal,
 } from 'react-native';
 import { useState, useRef } from 'react';
 
 export default function App() {
   const [refreshing, setRefreshing] = useState(false);
-  const [isDark, setIsDark] = useState(false); // controle manual do tema
-  const [showSettings, setShowSettings] = useState(false); // alterna tela de configs
+  const [isDark, setIsDark] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [selectedPost, setSelectedPost] = useState(null); // foto aberta
+  const [likedPosts, setLikedPosts] = useState([]); // ids curtidos
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
-  // Dados fake
+  // dados fake
   const posts = Array.from({ length: 9 }, (_, i) => ({
     id: String(i + 1),
     uri: `https://picsum.photos/400/400?random=${i + 1}`,
@@ -59,17 +62,22 @@ export default function App() {
     }).start();
   };
 
+  const toggleLike = (id) => {
+    setLikedPosts((prev) =>
+      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
+    );
+  };
+
+  // tela de configs
   if (showSettings) {
     return (
       <View style={[styles.container, { backgroundColor: theme.background }]}>
         <StatusBar style={isDark ? "light" : "dark"} />
         
-        {/* Cabeçalho Configurações */}
         <View style={[styles.header, { borderColor: theme.secondary }]}>
           <Text style={[styles.username, { color: theme.text }]}>Configurações</Text>
         </View>
 
-        {/* Opção de tema */}
         <View style={[styles.settingsItem, { backgroundColor: theme.card }]}>
           <Text style={{ color: theme.text, fontSize: 16 }}>Modo Escuro</Text>
           <Switch value={isDark} onValueChange={setIsDark} />
@@ -92,8 +100,6 @@ export default function App() {
       {/* Cabeçalho */}
       <View style={[styles.header, { borderColor: theme.secondary }]}>
         <Text style={[styles.username, { color: theme.text }]}>meu_usuario</Text>
-
-        {/* Botão Configurações */}
         <TouchableOpacity onPress={() => setShowSettings(true)}>
           <Text style={{ color: theme.button, fontWeight: "bold" }}>⚙️</Text>
         </TouchableOpacity>
@@ -107,7 +113,7 @@ export default function App() {
         />
         <View style={styles.stats}>
           <View style={styles.statItem}>
-            <Text style={[styles.statNumber, { color: theme.text }]}>120</Text>
+            <Text style={[styles.statNumber, { color: theme.text }]}>9</Text>
             <Text style={[styles.statLabel, { color: theme.secondary }]}>Posts</Text>
           </View>
           <View style={styles.statItem}>
@@ -123,7 +129,7 @@ export default function App() {
 
       {/* Bio */}
       <View style={styles.bio}>
-        <Text style={[styles.name, { color: theme.text }]}>Wesley Gabriel</Text>
+        <Text style={[styles.name, { color: theme.text }]}>Wes</Text>
         <Text style={[styles.description, { color: theme.secondary }]}>
           💻 Dev | 🎮 Gamer | Nada seu, tudo meu
         </Text>
@@ -141,7 +147,7 @@ export default function App() {
             <Text style={styles.buttonText}>Seguir</Text>
           </TouchableOpacity>
         </Animated.View>
-
+                
         <TouchableOpacity
           style={[styles.messageButton, { backgroundColor: theme.card }]}
           activeOpacity={0.7}
@@ -167,10 +173,49 @@ export default function App() {
         numColumns={3}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         renderItem={({ item }) => (
-          <Image source={{ uri: item.uri }} style={styles.postImage} />
+          <TouchableOpacity
+            style={styles.postWrapper}
+            onPress={() => setSelectedPost(item)}
+          >
+            <Image source={{ uri: item.uri }} style={styles.postImage} />
+          </TouchableOpacity>
         )}
         contentContainerStyle={styles.postsContainer}
       />
+
+      {/* Modal para abrir foto */}
+      <Modal visible={!!selectedPost} transparent={true} animationType="fade">
+        <View style={styles.modalContainer}>
+          {selectedPost && (
+            <>
+              <Image source={{ uri: selectedPost.uri }} style={styles.modalImage} />
+
+
+             <View style={{flexDirection:'row'}}>
+               {/* Botão Curtir */}
+               <TouchableOpacity
+                onPress={() => toggleLike(selectedPost.id)}
+                style={styles.likeButton}
+              >
+                <Text style={{ fontSize: 50 }}>
+                  {likedPosts.includes(selectedPost.id) ? "❤️" : "🤍"}
+                </Text>
+              </TouchableOpacity>
+
+              {/* Fechar */}
+              <TouchableOpacity
+                onPress={() => setSelectedPost(null)}
+                style={styles.closeButton}
+              >
+                <Text style={{ color: "#fff", fontSize: 18 }}>Fechar </Text>
+              </TouchableOpacity>
+
+             </View>
+             
+            </>
+          )}
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -220,8 +265,12 @@ const styles = StyleSheet.create({
     borderColor: "#ff8501",
   },
   storyName: { marginTop: 5, fontSize: 12 },
+
+  // grid de posts
   postsContainer: { paddingBottom: 100 },
-  postImage: { width: "33%", height: 140 },
+  postWrapper: { width: "33%", aspectRatio: 1 },
+  postImage: { width: "100%", height: "100%" },
+
   // Configurações
   settingsItem: {
     flexDirection: "row",
@@ -236,5 +285,28 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     alignItems: "center",
+  },
+
+  // Modal
+  modalContainer: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.95)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalImage: {
+    width: "90%",
+    height: "70%",
+    resizeMode: "contain",
+    marginBottom: 20,
+  },
+  closeButton: {
+    marginTop: 15,
+    padding: 10,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    borderRadius: 8,
+  },
+  likeButton: {
+  
   },
 });
